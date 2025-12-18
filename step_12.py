@@ -15,7 +15,7 @@ load_dotenv()
 # 1. OpenAI Client
 # 주의: API Key는 소스코드에 직접 노출하는 것보다 환경 변수(.env) 등으로 관리하는 것이 보안상 좋습니다.
 # 현재는 코드 내에 하드코딩 되어 있습니다.
-client = OpenAI(api_key="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")
+client = OpenAI(api_key="xxx")
 
 # 2. 유튜브 자막 다운로드 함수
 def download_subtitle(video_url):
