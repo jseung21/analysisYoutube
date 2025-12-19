@@ -1,62 +1,131 @@
-# YouTube 댓글 감성 분석기 (YouTube Comment Sentiment Analyzer)
+# 🎬 AI 기반 YouTube 콘텐츠 자동 분석 시스템 - 코드 설명서
 
-이 프로젝트는 **Streamlit**을 기반으로 구축된 웹 애플리케이션으로, YouTube 동영상의 댓글을 수집하고 자연어 처리(NLP)를 통해 감성 분석 및 주요 키워드를 시각화하여 보여줍니다.
+이 문서는 YouTube 동영상의 내용을 AI로 요약하고, 시청자들의 댓글 반응을 분석하여 시각화하는 프로젝트의 코드 설명서입니다.
 
-## 📋 주요 기능
+## 📂 1. 프로젝트 파일 구조 및 역할
 
-1.  **웹 인터페이스 (GUI)**: Streamlit을 사용하여 직관적인 웹 환경에서 분석을 수행할 수 있습니다.
-2.  **실시간 댓글 수집**: YouTube Data API를 통해 사용자가 입력한 동영상 ID(또는 URL)의 댓글을 실시간으로 수집합니다.
-3.  **감성 분석**: `Konlpy`의 `Okt` 형태소 분석기를 활용하여 댓글의 긍정/부정/중립 감성을 분석하고 파이 차트로 시각화합니다.
-4.  **워드 클라우드**: 댓글에서 가장 많이 언급된 명사를 추출하여 워드 클라우드로 시각화합니다.
-5.  **데이터 다운로드**: 분석된 결과 데이터를 CSV 파일로 다운로드할 수 있습니다.
-6.  **사용자 설정**: 사이드바를 통해 API Key 및 수집할 댓글 수를 조절할 수 있습니다.
+프로젝트는 크게 3생의 핵심 Python 파일로 구성되어 있습니다.
 
-## 🛠️ 필요 환경 및 라이브러리
-
-이 애플리케이션을 실행하기 위해서는 Python 3.x 환경과 다음 라이브러리들이 필요합니다. 또한 `Konlpy` 실행을 위해 **Java (JDK)** 가 설치되어 있어야 합니다.
-
-### 필수 라이브러리 설치
-```bash
-pip install streamlit konlpy wordcloud pandas matplotlib seaborn google-api-python-client
+```
+📁 teamProject2
+├── 📄 download_model.py    # [설정] 감성 분석에 필요한 모델을 미리 다운로드하는 유틸리티
+├── 📄 analysisYoutube.py   # [메인] Streamlit 웹 애플리케이션 실행 파일 (UI, 댓글 분석)
+└── 📄 step_12.py           # [모듈] 영상 자막 다운로드 및 GPT/BERT 기반 콘텐츠 분석 기능
 ```
 
-### 시스템 요구사항
-*   **Java (JDK)**: `Konlpy`는 Java 기반이므로 시스템에 Java가 설치되어 있고 환경 변수(`JAVA_HOME`)가 설정되어 있어야 합니다.
-*   **한글 폰트**: 워드 클라우드 및 그래프 출력을 위해 시스템에 한글 폰트(예: 맑은 고딕 `Malgun Gothic`)가 필요합니다.
+---
 
-## 🚀 사용 방법
+## 📝 2. 파일별 상세 코드 설명
 
-1.  **Google Cloud Console 설정**:
-    *   Google Cloud Console에서 프로젝트를 생성하고 **YouTube Data API v3**를 활성화합니다.
-    *   API Key를 발급받습니다. (기본값이 코드에 포함되어 있으나, 본인의 키를 사용하는 것을 권장합니다.)
+### A. download_model.py (초기 설정용)
+앱 실행 속도를 높이기 위해 감성 분석 모델을 로컬에 미리 저장하는 스크립트입니다.
+- 실행 시 `matthewburke/korean_sentiment` 모델을 다운로드하여 `./my_model` 폴더에 저장합니다.
+  - matthewburke/korean_sentiment 모델은 한국어 텍스트의 감정(긍정/부정)을 분석하기 위해 미세 조정(Fine-tuning)된 딥러닝 모델
 
-2.  **애플리케이션 실행**:
-    터미널에서 다음 명령어를 실행하여 Streamlit 서버를 시작합니다.
+### B. analysisYoutube.py (메인 애플리케이션)
+사용자가 웹 브라우저를 통해 상호작용하는 UI와 댓글 분석의 핵심 로직이 포함되어 있습니다.
 
-    ```bash
-    streamlit run analysisYoutube.py
-    ```
+- **주요 기능**:
+  - **사용자 입력**: YouTube 비디오 ID 또는 URL 입력, API Key 설정.
+  - **댓글 수집**: `get_video_comments` 함수를 통해 YouTube Data API v3를 호출하여 댓글 데이터를 가져옵니다.
+  - **데이터 전처리**: 정규표현식(Regex)을 사용하여 특수문자, 이모지 등을 제거하고 텍스트를 정제합니다.
+  - **감성 분석**: `analyze_comments` 함수에서 Hugging Face의 사전 학습된 한국어 감성 분석 모델을 사용해 긍정/부정을 판단합니다.
+  - **시각화**:
+    - **파이 차트**: 긍정/부정 비율 표시 (Matplotlib)
+    - **워드 클라우드**: 댓글에서 자주 등장하는 명사 키워드 시각화 (WordCloud, Konlpy)
 
-3.  **웹 브라우저 접속**:
-    명령어 실행 후 자동으로 브라우저가 열리거나, 터미널에 표시된 로컬 주소(예: `http://localhost:8501`)로 접속합니다.
+### C. step_12.py (백엔드 분석 모듈)
+영상의 '콘텐츠' 자체를 분석하는 기능을 담당하며, `analysisYoutube.py`에서 import하여 사용합니다.
 
-4.  **분석 수행**:
-    *   **사이드바**: API Key를 입력하고(선택 사항), 수집할 댓글 수를 설정합니다.
-    *   **메인 화면**: 분석하고 싶은 YouTube 영상의 URL 또는 ID를 입력하고 **"분석 시작 🚀"** 버튼을 클릭합니다.
+- **주요 기능**:
+  - **자막 다운로드 (`download_subtitle`)**: `yt-dlp` 라이브러리를 사용해 영상의 자동 생성된 한국어 자막(.vtt)을 추출합니다.
+  - **자막 정제 (`clean_vtt_text`)**: 다운로드된 자막 파일에서 타임스탬프, HTML 태그 등을 제거하여 순수 텍스트로 변환합니다.
+  - **AI 요약 및 분석 (`summarize_with_gpt`, `classify_topic_with_gpt`)**:
+    - OpenAI의 GPT 모델(gpt-4o)을 사용하여 긴 자막을 5줄 요약하고, 영상의 대분류/소분류 주제를 분류합니다.
+  - **키워드 추출**:
+    - **GPT**: 문맥을 이해하여 핵심 키워드를 추천합니다.
+    - **KeyBERT**: BERT 임베딩 기반의 통계적 방법으로 문서 내 핵심 문구를 추출합니다.
 
-## 📊 실행 결과 화면
 
-*   **감성 분석 결과**: 긍정/부정/중립 비율을 파이 차트로 확인하고, 구체적인 댓글 수를 볼 수 있습니다.
-*   **주요 키워드**: 워드 클라우드를 통해 영상에 대한 주요 반응 키워드를 한눈에 파악할 수 있습니다.
-*   **데이터 보기**: 수집된 원본 댓글과 분석 결과를 표 형태로 확인하고 CSV로 저장할 수 있습니다.
+---
 
-## ⚠️ 주의사항
+## 🛠 3. 사용된 기술 스택
 
-*   **API 할당량**: YouTube Data API는 하루 사용량 제한(Quota)이 있습니다. 과도한 요청 시 API 호출이 차단될 수 있습니다.
-*   **형태소 분석 속도**: 댓글 수가 많을 경우 `Konlpy`의 분석 속도가 느려질 수 있습니다.
-*   **Streamlit 실행**: 반드시 `python analysisYoutube.py`가 아닌 `streamlit run analysisYoutube.py`로 실행해야 합니다.
+| 구분 | 기술/라이브러리 | 용도 |
+| :--- | :--- | :--- |
+| **프론트엔드** | `Streamlit` | 웹 인터페이스 구성 및 데이터 시각화 |
+| **데이터 수집** | `YouTube Data API` | 댓글 데이터 수집 |
+| | `yt-dlp` | 영상 자막(Subtitle) 추출 |
+| **AI/ML** | `OpenAI GPT-4o` | 텍스트 요약, 주제 분류, 맥락 기반 키워드 추출 |
+| | `Transformers` | 한국어 감성 분석 (BERT 기반 모델) |
+| | `KeyBERT` | 통계적 키워드 추출 |
+| **NLP** | `Konlpy (Okt)` | 한국어 형태소 분석 (명사 추출) |
+| **시각화** | `Matplotlib`, `WordCloud` | 차트 및 워드 클라우드 생성 |
 
-## 📝 파일 구조
+## 🚀 4. 실행 방법
 
-*   `analysisYoutube.py`: Streamlit 웹 애플리케이션 소스 코드
-*   `readme.md`: 프로젝트 설명 파일
+1. **사전 준비**: 
+   - `download_model.py`를 먼저 한 번 실행하여 모델을 다운로드합니다.
+   ```bash
+   python download_model.py
+   ```
+
+2. **앱 실행**:
+   - 터미널에서 Streamlit 명령어로 분석 앱을 실행합니다.
+   ```bash
+   streamlit run analysisYoutube.py
+   ```
+
+---
+
+## 📊 5. 데이터 처리 파이프라인 (Data Flow)
+
+이 프로젝트의 데이터 흐름을 시각적으로 표현하면 다음과 같습니다.
+
+```mermaid
+graph TD
+    User([사용자 입력: YouTube URL]) --> App[analysisYoutube.py]
+    
+    subgraph "Step 1 & 2: 콘텐츠 분석 (step_12.py)"
+        App --> |URL 전달| Down["자막 다운로드 (yt-dlp)"]
+        Down --> Sub["자막 텍스트 정제"]
+        Sub --> |Prompt| GPT["OpenAI GPT-4o"]
+        Sub --> |Embedding| BERT["KeyBERT"]
+        GPT --> Sum["영상 요약"]
+        GPT --> Topic["주제 분류"]
+        GPT --> KwGPT["키워드 추출 (맥락)"]
+        BERT --> KwBERT["키워드 추출 (통계)"]
+    end
+    
+    subgraph "Step 3: 반응 분석 (analysisYoutube.py)"
+        App --> |Video ID| API["YouTube Data API"]
+        API --> Comments["댓글 데이터 수집"]
+        Comments --> Sentiment["감성 분석 (Hugging Face)"]
+        Comments --> Nouns["형태소 분석 (Konlpy)"]
+    end
+    
+    Sum & Topic & KwGPT & KwBERT --> UI["Streamlit 대시보드 출력"]
+    Sentiment --> Chart["파이 차트 시각화"]
+    Nouns --> Cloud["워드 클라우드"]
+```
+
+---
+
+## 💡 6. 핵심 기술 하이라이트
+
+### A. 하이브리드 키워드 추출 전략
+단일 알고리즘의 한계를 극복하기 위해 두 가지 방식을 결합했습니다.
+- **GPT (맥락 기반)**: "이 영상의 주제가 무엇인가?"라는 문맥적 이해를 바탕으로 키워드를 생성합니다. (예: 영상에 직접 나오지 않아도 관련된 추상적 단어 추출)
+- **KeyBERT (통계 기반)**: 텍스트 내에서 실제로 중요하게 등장한 단어의 임베딩 유사도를 분석합니다. (예: 빈도가 높고 핵심적인 구체적 단어 추출)
+> **효과**: 두 결과의 교집합과 합집합을 통해 편향되지 않은 풍부한 키워드를 제공합니다.
+
+### B. Streamlit 성능 최적화 (Caching)
+반복적인 데이터 처리로 인한 속도 저하와 비용 문제를 해결하기 위해 캐싱 전략을 적용했습니다.
+
+| 적용 대상 | 데코레이터 | 설명 |
+| :--- | :--- | :--- |
+| **감성 분석 모델** | `@st.cache_resource` | 용량이 큰 딥러닝 모델 로딩 과정을 최초 1회만 수행하고 메모리에 상주시켜 재사용합니다. |
+| **API 호출 & 분석** | `@st.cache_data` | 동일한 Video ID에 대한 댓글 수집 및 분석 결과는 저장해두었다가 즉시 반환하여 API 쿼리 비용을 절약합니다. |
+
+### C. 딥러닝 모델 관리 (On-Device Local Loading)
+Hugging Face의 모델을 매번 인터넷에서 다운로드하는 오버헤드를 줄이기 위해, `download_model.py` 스크립트를 통해 **로컬 스토리지에 모델을 저장**하고 앱에서는 오프라인 모드로 로드하도록 설계했습니다. 이는 오프라인 환경이나 불안정한 네트워크에서도 안정적인 실행을 보장합니다.
